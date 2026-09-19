@@ -40,6 +40,8 @@
 
 | 文件 | 说明 |
 |------|------|
+| `1-deploy.bat` | 一键部署启动器（双击运行 deploy.ps1） |
+| `2-wifi-keepalive.bat` | WiFi 保活安装启动器（双击运行 install） |
 | `deploy.ps1` | 一键部署：探测网卡 → 生成配置 → 安装到 `C:\sing-box` → 注册开机自启任务 |
 | `restore.ps1` | 一键还原：删除任务、结束进程，恢复到部署前状态 |
 | `wifi-keepalive.ps1` | WiFi 保活模块：关闭电源管理 + 断开自动重连 + 定期复查修复 |
@@ -50,7 +52,19 @@
 
 ## 安装步骤
 
+> **最简单的方式：双击 .bat 文件**（推荐，适合不熟悉 PowerShell 的人）
+>
+> 项目里已经备好两个启动器，双击即可运行：
+> - `1-deploy.bat` —— 部署智能分流（对应 `deploy.ps1`）
+> - `2-wifi-keepalive.bat` —— 安装 WiFi 保活（对应 `wifi-keepalive.ps1 install`）
+>
+> 运行时会弹 UAC 提权框，点"是"即可。窗口会停在"Done"等你看到结果。
+
 ### 1. 部署智能分流
+
+**方式 A（双击）**：双击 `1-deploy.bat`
+
+**方式 B（命令行）**：
 
 ```powershell
 cd <项目目录>
@@ -62,6 +76,10 @@ cd <项目目录>
 首次运行会弹 UAC，点"是"。
 
 ### 2. 部署 WiFi 保活
+
+**方式 A（双击）**：双击 `2-wifi-keepalive.bat`
+
+**方式 B（命令行）**：
 
 ```powershell
 .\wifi-keepalive.ps1 install
