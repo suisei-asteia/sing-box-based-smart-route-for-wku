@@ -1,0 +1,51 @@
+{
+  "log": {
+    "level": "info",
+    "timestamp": true
+  },
+  "dns": {
+    "servers": [
+      { "type": "udp", "tag": "cn-dns", "server": "223.5.5.5", "detour": "direct-wired" },
+      { "type": "udp", "tag": "intl-dns", "server": "10.0.0.10", "detour": "direct-wifi" },
+      { "type": "local", "tag": "local" }
+    ],
+    "rules": [
+      { "rule_set": "geosite-cn", "action": "route", "server": "cn-dns" },
+      { "action": "route", "server": "intl-dns" }
+    ],
+    "final": "intl-dns",
+    "strategy": "ipv4_only"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": ["172.19.0.1/30", "fdfe:dcba:9876::1/126"],
+      "mtu": 1500,
+      "auto_route": true,
+      "strict_route": true
+    }
+  ],
+  "outbounds": [
+    { "type": "direct", "tag": "direct-wired", "bind_interface": "以太网" },
+    { "type": "direct", "tag": "direct-wifi", "bind_interface": "WLAN" },
+    { "type": "block", "tag": "block" }
+  ],
+  "route": {
+    "rule_set": [
+      { "type": "local", "tag": "geosite-cn", "format": "binary", "path": "geosite-cn.srs" },
+      { "type": "local", "tag": "geoip-cn", "format": "binary", "path": "geoip-cn.srs" }
+    ],
+    "rules": [
+      { "inbound": "tun-in", "action": "sniff", "timeout": "1s" },
+      { "ip_cidr": ["192.168.10.0/24"], "outbound": "direct-wired" },
+      { "ip_cidr": ["10.0.0.0/8"], "outbound": "direct-wifi" },
+      { "rule_set": "geoip-cn", "outbound": "direct-wired" },
+      { "rule_set": "geosite-cn", "outbound": "direct-wired" },
+      { "outbound": "direct-wifi" }
+    ],
+    "final": "direct-wifi",
+    "default_domain_resolver": "intl-dns",
+    "auto_detect_interface": false
+  }
+}
