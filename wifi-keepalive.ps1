@@ -247,6 +247,8 @@ switch ($Action) {
             Write-Log ("注册保活任务失败: " + $_.Exception.Message)
             Write-Host ("注册保活任务失败: " + $_.Exception.Message) -ForegroundColor Red
         }
+        Write-Host ''
+        Read-Host '应用已安装（或已结束），请关闭此页面'
     }
     'uninstall' {
         Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
