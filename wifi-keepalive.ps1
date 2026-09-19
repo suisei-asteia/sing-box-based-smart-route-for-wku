@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     WiFi 保活模块：防止插上有线后 WiFi 被系统自动断开。
 .DESCRIPTION
@@ -228,6 +228,18 @@ switch ($Action) {
                 ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
             # 自复制到安装目录，保证计划任务路径稳定
             New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+            # 加固目录 ACL：仅 Administrators/SYSTEM 可写，Users 只读
+            # 防止低权限用户篡改以 SYSTEM 运行的脚本（本地提权防护）
+            $acl = Get-Acl $InstallDir
+            $acl.SetAccessRuleProtection($true, $false)
+            foreach ($r in @($acl.Access)) { $acl.RemoveAccessRule($r) | Out-Null }
+            $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule(
+                'BUILTIN\Administrators', 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')))
+            $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule(
+                'NT AUTHORITY\SYSTEM', 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')))
+            $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule(
+                'BUILTIN\Users', 'ReadAndExecute', 'ContainerInherit,ObjectInherit', 'None', 'Allow')))
+            Set-Acl -Path $InstallDir -AclObject $acl
             $dest = Join-Path $InstallDir 'wifi-keepalive.ps1'
             Copy-Item $PSCommandPath $dest -Force
             $taskAction = New-ScheduledTaskAction -Execute 'powershell.exe' `

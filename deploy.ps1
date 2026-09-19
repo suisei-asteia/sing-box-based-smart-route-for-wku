@@ -115,6 +115,18 @@ try {
 
     Write-Host '=== 3/5 复制文件到安装目录 ===' -ForegroundColor Cyan
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+    # 加固目录 ACL：仅 Administrators/SYSTEM 可写，Users 只读
+    # 防止低权限用户篡改以 SYSTEM 运行的 sing-box.exe（本地提权防护）
+    $acl = Get-Acl $InstallDir
+    $acl.SetAccessRuleProtection($true, $false)
+    foreach ($r in @($acl.Access)) { $acl.RemoveAccessRule($r) | Out-Null }
+    $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule(
+        'BUILTIN\Administrators', 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')))
+    $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule(
+        'NT AUTHORITY\SYSTEM', 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')))
+    $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule(
+        'BUILTIN\Users', 'ReadAndExecute', 'ContainerInherit,ObjectInherit', 'None', 'Allow')))
+    Set-Acl -Path $InstallDir -AclObject $acl
     foreach ($f in @('sing-box.exe', 'wintun.dll', 'geosite-cn.srs', 'geoip-cn.srs')) {
         $src = Join-Path $SourceDir $f
         if (-not (Test-Path $src)) { throw "缺少源文件: $src （请先按 README「第三方依赖」章节下载放置）" }
